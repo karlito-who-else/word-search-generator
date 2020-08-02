@@ -53,7 +53,6 @@
                 grid-area: main;
                 grid-template-columns: repeat(10, 1fr);
                 grid-template-rows: repeat(10, 1fr);
-                /* max-width: 50%; */
                 outline: 2px solid black;
             }
 
@@ -65,7 +64,7 @@
                 padding: 1rem;
             }
 
-            .placeholder {
+            .cheat .placeholder {
                 color: red;
             }
         </style>
@@ -84,17 +83,20 @@
                 <label for="lowercase">Lowercase</label>
             </div>
             <button id="generate-wordsearch-grid-button" type="submit">Generate Wordsearch Grid</button>
+            <button id="cheat-button" type="button">Toggle Answers</button>
         </form>
         <main></main>
         <template id="word-input">
-            <input type="text" name="words" placeholder="Enter a word" />
+            <div>
+                <input type="text" name="words" placeholder="Enter a word" />
+                <button class="remove-word-button" type="button">Remove Word</button>
+            </div>
         </template>
         <template id="letter">
             <span class="letter"></span>
         </template>
         <script>
             // Functions
-            // const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min) + min);
             const getRandomInt = (min, max) => Math.floor(Math.random() * (Math.floor(max) - Math.ceil(min))) + Math.ceil(min);
 
             const getRandomItem = (items) => items[Math.floor(Math.random() * items.length)];
@@ -138,7 +140,7 @@
                     const input = clone.querySelector("input");
                     input.value = word;
 
-                    wordsContainer.appendChild(input);
+                    wordsContainer.appendChild(clone);
 
                     input.focus();
                 });
@@ -146,8 +148,6 @@
 
             const populateGrid = () => {
                 grid.innerHTML = '';
-
-                // console.log('letters.length', letters.length);
 
                 letters.forEach(character => {
                     const clone = letterTemplate.content.cloneNode(true);
@@ -159,7 +159,6 @@
                     const letterInChosenCase = upperOrLower === 'lowercase' ? letter.toLowerCase() : letter.toUpperCase();
 
                     span.textContent = letterInChosenCase;
-                    // span.textContent = character;
 
                     if (character === placeholderCharacter) {
                         span.classList.add('placeholder');
@@ -187,8 +186,6 @@
             };
 
             const setupWord = (word) => {
-                console.group();
-
                 let wordProperties = setWordProperties(word);
 
                 let wordClash = true;
@@ -197,12 +194,6 @@
                     const letterClash = [];
 
                     wordProperties = setWordProperties(word);
-
-                    // console.log('word', word);
-                    // console.log('word.length', word.length);
-                    // console.log('direction', direction);
-                    // console.log('columnStart', columnStart);
-                    // console.log('rowStart', rowStart);
 
                     Array.from(word).forEach((letter, index) => {
                         let positionX = wordProperties.columnStart;
@@ -222,26 +213,15 @@
 
                         const position = (positionX + (positionY * gridSize));
 
-                        console.log('letter', letter);
-                        console.log('positionX', positionX);
-                        console.log('positionY', positionY);
-                        console.log('position', position);
-                        console.log('letters[position]', letters[position]);
-
                         if(letter === letters[position] || letters[position] === placeholderCharacter) {
                             letterClash.push(false);
                         } else {
                             letterClash.push(true);
                         }
                     });
-                    console.log('letterClash', letterClash);
-                    wordClash = letterClash.some((v) => v === true);
-                    console.log('wordClash', wordClash);
-                    // wordClash = false;
-                }
 
-                console.log('word', word);
-                console.log('wordProperties', wordProperties);
+                    wordClash = letterClash.some((v) => v === true);
+                }
 
                 Array.from(word).forEach((letter, index) => {
                     let positionX = wordProperties.columnStart;
@@ -263,8 +243,6 @@
 
                     letters[position] = letter;
                 });
-
-                console.groupEnd();
             };
 
             const addWordsToGrid = () => {
@@ -273,18 +251,14 @@
                 if (words.length) {
                     longestWord = words.reduce((a, b) => a.length > b.length ? a : b);
 
-                    // gridSize = Math.floor(Math.random() * ((longestWord.length + 5) - longestWord.length + 1)) + longestWord.length;
                     gridSize = longestWord.length * Math.ceil(1.25);
 
                     grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
                     grid.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
 
-                    // letters = getRandomCharacters();
                     letters = getPlaceholderCharacters();
 
-                    // console.log('gridSize', gridSize);
-                    // console.log('gridSize * gridSize', gridSize * gridSize);
-                    // console.log('letters.length', letters.length);
+                    console.info(`Grid size: ${gridSize}`);
 
                     words
                     .sort((a, b) => b.length - a.length)
@@ -298,6 +272,8 @@
             const form = document.querySelector('form');
             const wordsContainer = document.querySelector('#words-container');
             const addWordButton = document.querySelector('#add-word-button');
+            // const removeWordButton = document.querySelectorAll('.remove-word-button');
+            const cheatButton = document.querySelector('#cheat-button');
             const grid = document.querySelector('main');
 
             // Templates
@@ -328,19 +304,19 @@
 
                 const input = clone.querySelector("input");
 
-                wordsContainer.appendChild(input);
+                wordsContainer.appendChild(clone);
 
                 input.focus();
             });
 
-            showAnswersButton.addEventListener('click', (event) => {
-                const clone = wordInputTemplate.content.cloneNode(true);
+            wordsContainer.addEventListener('click', (event) => {                
+                const parentElement = event.target.parentElement;
 
-                const input = clone.querySelector("input");
+                parentElement.remove();
+            });
 
-                wordsContainer.appendChild(input);
-
-                input.focus();
+            cheatButton.addEventListener('click', (event) => {
+                grid.classList.toggle('cheat');
             });
 
             form.addEventListener('submit', (event) => {
