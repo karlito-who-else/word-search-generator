@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="index, follow">
+        <style>
+            body {
+                background: black;
+                display: grid;
+                gap: 1rem;
+                grid-template-columns: minmax(10vw, auto)  1fr;
+                grid-template-areas: 
+                    "header header"
+                    "form main"
+                    "footer footer";
+                justify-items: center;
+                margin: 1rem;
+                padding: 0;
+            }
+
+            header {
+                display: none;
+                grid-area: header;
+            }
+
+            footer {
+                grid-area: footer;
+            }
+
+            form {
+                align-content: start;
+                background: white;
+                display: grid;
+                gap: 1rem;
+                grid-area: form;
+                padding: 1rem;
+            }
+
+            #words-container {
+                display: grid;
+                gap: 1rem;
+                grid-auto-flow: row;
+            }
+
+            input {
+                text-align: center;
+            }
+
+            main {
+                background: white;
+                display: grid;
+                grid-area: main;
+                grid-template-columns: repeat(10, 1fr);
+                grid-template-rows: repeat(10, 1fr);
+                /* max-width: 50%; */
+                outline: 2px solid black;
+            }
+
+            .letter {
+                align-items: center;
+                display: grid;
+                justify-content: center;
+                outline: 1px solid black;
+                padding: 1rem;
+            }
+
+            .placeholder {
+                color: red;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>Wordsearch Generator</h1>
+        </header>
+        <form>
+            <div id="words-container"></div>
+            <button id="add-word-button" type="button">Add word</button>
+            <div id="case-options">
+                <input type="radio" name="case" id="uppercase" value="uppercase" checked />
+                <label for="uppercase">Uppercase</label>
+                <input type="radio" name="case" id="lowercase" value="lowercase" />
+                <label for="lowercase">Lowercase</label>
+            </div>
+            <button id="generate-wordsearch-grid-button" type="submit">Generate Wordsearch Grid</button>
+        </form>
+        <main></main>
+        <template id="word-input">
+            <input type="text" name="words" placeholder="Enter a word" />
+        </template>
+        <template id="letter">
+            <span class="letter"></span>
+        </template>
+        <script>
+            // Functions
+            // const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min) + min);
+            const getRandomInt = (min, max) => Math.floor(Math.random() * (Math.floor(max) - Math.ceil(min))) + Math.ceil(min);
+
+            const getRandomItem = (items) => items[Math.floor(Math.random() * items.length)];
+
+            const placeholderCharacter = '~';
+
+            const getRandomCharacters = () => {
+                const characters = [];
+
+                let gridItemIterator = 0;
+
+                while(gridItemIterator < (gridSize * gridSize)) {
+                    const character = getRandomItem(randomCharacters);
+
+                    characters.push(character);
+
+                    gridItemIterator++;
+                }
+
+                return characters;
+            };
+
+            const getPlaceholderCharacters = () => {
+                const characters = [];
+
+                let gridItemIterator = 0;
+
+                while(gridItemIterator < (gridSize * gridSize)) {
+                    characters.push(placeholderCharacter);
+
+                    gridItemIterator++;
+                }
+
+                return characters;
+            };
+
+            const populateForm = () => {
+                words.forEach(word => {
+                    const clone = wordInputTemplate.content.cloneNode(true);
+
+                    const input = clone.querySelector("input");
+                    input.value = word;
+
+                    wordsContainer.appendChild(input);
+
+                    input.focus();
+                });
+            };
+
+            const populateGrid = () => {
+                grid.innerHTML = '';
+
+                // console.log('letters.length', letters.length);
+
+                letters.forEach(character => {
+                    const clone = letterTemplate.content.cloneNode(true);
+
+                    const span = clone.querySelector("span");
+
+                    const letter = character === placeholderCharacter ? getRandomItem(randomCharacters) : character;
+
+                    const letterInChosenCase = upperOrLower === 'lowercase' ? letter.toLowerCase() : letter.toUpperCase();
+
+                    span.textContent = letterInChosenCase;
+                    // span.textContent = character;
+
+                    if (character === placeholderCharacter) {
+                        span.classList.add('placeholder');
+                    }
+
+                    grid.appendChild(span);
+                });
+            };
+
+            const setWordProperties = (word) => {
+                let direction = getRandomItem(directions);
+
+                let columnStart = getRandomInt(1, gridSize - word.length);
+                let rowStart = getRandomInt(1, gridSize - word.length);
+
+                if(direction.includes('left')) {
+                    columnStart = getRandomInt(gridSize - word.length, gridSize);
+                }
+
+                if(direction.includes('up')) {
+                    rowStart = getRandomInt(gridSize - word.length, gridSize);
+                }
+                
+                return { direction, columnStart, rowStart };
+            };
+
+            const setupWord = (word) => {
+                console.group();
+
+                let wordProperties = setWordProperties(word);
+
+                let wordClash = true;
+
+                while(wordClash === true) {
+                    const letterClash = [];
+
+                    wordProperties = setWordProperties(word);
+
+                    // console.log('word', word);
+                    // console.log('word.length', word.length);
+                    // console.log('direction', direction);
+                    // console.log('columnStart', columnStart);
+                    // console.log('rowStart', rowStart);
+
+                    Array.from(word).forEach((letter, index) => {
+                        let positionX = wordProperties.columnStart;
+                        let positionY = (wordProperties.rowStart);
+
+                        if(wordProperties.direction.includes('up')) {
+                            positionY = positionY - index;
+                        } else if(wordProperties.direction.includes('down')) {
+                            positionY = positionY + index;
+                        }
+
+                        if(wordProperties.direction.includes('left')) {
+                            positionX = positionX - index;
+                        } else if(wordProperties.direction.includes('right')) {
+                            positionX = positionX + index;
+                        }
+
+                        const position = (positionX + (positionY * gridSize));
+
+                        console.log('letter', letter);
+                        console.log('positionX', positionX);
+                        console.log('positionY', positionY);
+                        console.log('position', position);
+                        console.log('letters[position]', letters[position]);
+
+                        if(letter === letters[position] || letters[position] === placeholderCharacter) {
+                            letterClash.push(false);
+                        } else {
+                            letterClash.push(true);
+                        }
+                    });
+                    console.log('letterClash', letterClash);
+                    wordClash = letterClash.some((v) => v === true);
+                    console.log('wordClash', wordClash);
+                    // wordClash = false;
+                }
+
+                console.log('word', word);
+                console.log('wordProperties', wordProperties);
+
+                Array.from(word).forEach((letter, index) => {
+                    let positionX = wordProperties.columnStart;
+                    let positionY = (wordProperties.rowStart);
+
+                    if(wordProperties.direction.includes('up')) {
+                        positionY = positionY - index;
+                    } else if(wordProperties.direction.includes('down')) {
+                        positionY = positionY + index;
+                    }
+
+                    if(wordProperties.direction.includes('left')) {
+                        positionX = positionX - index;
+                    } else if(wordProperties.direction.includes('right')) {
+                        positionX = positionX + index;
+                    }
+
+                    const position = (positionX + (positionY * gridSize));
+
+                    letters[position] = letter;
+                });
+
+                console.groupEnd();
+            };
+
+            const addWordsToGrid = () => {
+                new FormData(form);
+
+                if (words.length) {
+                    longestWord = words.reduce((a, b) => a.length > b.length ? a : b);
+
+                    // gridSize = Math.floor(Math.random() * ((longestWord.length + 5) - longestWord.length + 1)) + longestWord.length;
+                    gridSize = longestWord.length * Math.ceil(1.25);
+
+                    grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                    grid.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+
+                    // letters = getRandomCharacters();
+                    letters = getPlaceholderCharacters();
+
+                    // console.log('gridSize', gridSize);
+                    // console.log('gridSize * gridSize', gridSize * gridSize);
+                    // console.log('letters.length', letters.length);
+
+                    words
+                    .sort((a, b) => b.length - a.length)
+                    .forEach((word) => setupWord(word));
+
+                    populateGrid();
+                }
+            };
+
+            // Elements
+            const form = document.querySelector('form');
+            const wordsContainer = document.querySelector('#words-container');
+            const addWordButton = document.querySelector('#add-word-button');
+            const grid = document.querySelector('main');
+
+            // Templates
+            const wordInputTemplate = document.querySelector('#word-input');
+            const letterTemplate = document.querySelector('#letter');
+
+            // Constants
+            const randomCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const directions = ['up', 'down', 'left', 'right', 'up-left', 'up-right', 'down-left', 'down-right'];
+            
+            // Settings
+            let gridSize = 10;
+            let upperOrLower = 'uppercase';
+            let letters = getRandomCharacters();
+            let words = ['toy', 'square', 'play', 'round', 'circle', 'window', 'xylophone', 'giraffe', 'piano', 'tablet', 'pirate', 'school', 'blanket', 'airplane', 'snowman', 'orange', 'teddy', 'rucksack'];
+            let longestWord;
+
+            // Set default content
+            grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+
+            populateForm();
+            addWordsToGrid();
+
+            // Event Listeners
+            addWordButton.addEventListener('click', (event) => {
+                const clone = wordInputTemplate.content.cloneNode(true);
+
+                const input = clone.querySelector("input");
+
+                wordsContainer.appendChild(input);
+
+                input.focus();
+            });
+
+            showAnswersButton.addEventListener('click', (event) => {
+                const clone = wordInputTemplate.content.cloneNode(true);
+
+                const input = clone.querySelector("input");
+
+                wordsContainer.appendChild(input);
+
+                input.focus();
+            });
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                addWordsToGrid();
+            });
+
+            form.addEventListener('formdata', (event) => {
+                const data = event.formData;
+
+                words.length = 0; // reset words if any have been amended
+
+                Array.from(data.entries()).forEach(entry => {
+                    if(entry[0] === 'case') {
+                        upperOrLower = entry[1];
+                    } else if (entry[0] === 'words') {
+                        if (entry[1].length > 0) {
+                            words.push(entry[1]);
+                        }
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>
+
