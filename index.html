@@ -18,7 +18,6 @@
             }
 
             body {
-                background: black;
                 display: grid;
                 justify-items: center;
                 padding: 0;
@@ -89,6 +88,12 @@
                 color: red;
             }
 
+            @media screen {
+                body {
+                    
+                }
+            }
+
             @media screen and (max-width: 960px) {
                 body {
                     grid-template-areas: "header" "form" "main" "footer";
@@ -106,6 +111,7 @@
 
             @media screen and (min-width: 961px) {
                 body {
+                    background: black;
                     gap: 1rem;
                     grid-template-areas:  "header header" "form main" "footer footer";
                     grid-template-columns: minmax(10vw, auto)  1fr;
@@ -114,6 +120,41 @@
 
                 .letter {
                     padding: 1rem;
+                }
+            }
+
+            @media print {
+                body {
+                    align-content: start;
+                    gap: 1rem;
+                    grid-template-areas:  "header header" "form main" "footer footer";
+                    grid-template-columns: 10%  1fr;
+                    height: 100vh;
+                    justify-items: center;
+                }
+
+                button {
+                    display: none;
+                }
+                
+                input {
+                    border: none;
+                }
+
+                main {
+                    width: 100%;
+                }
+
+                form {
+                    padding: 1rem;
+                }
+
+                #case-options {
+                    display: none;
+                }
+
+                .letter {
+                    padding: 0.4rem;
                 }
             }
         </style>
@@ -359,7 +400,6 @@
             });
 
             wordsContainer.addEventListener('click', (event) => {
-                console.log('event.target', event.target);
                 if (event.target.classList.contains('remove-word-button')) {
                     const parentElement = event.target.parentElement;
 
